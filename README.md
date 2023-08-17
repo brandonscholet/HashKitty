@@ -25,9 +25,11 @@ This tool downloads and sets as default the wordlist rockyou.txt and rule file o
 
 To use an alternate wordlist file use `-w <path to wordlist>`
 
-to use the defualt rule file use `-r`
+to use the default rule file use `-r`
 
-To use an alternate rile file use `-r <path to rules file>`
+To use an alternate rule file use `-r <path to rules file>`
+
+I recommend using [rockyou2021.txt](https://github.com/ohmybahgosh/RockYou2021.txt) +rules for cheap hashes.
 
 ## Modes
 

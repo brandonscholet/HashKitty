@@ -1,5 +1,10 @@
 # HashcatHerder
-A wrapper to setup, install drivers, and run hashcat with ease.
+
+Do you want to crack some files with out dealing with installing hashcat and drivers and then needing the paths for everything and all the arguments?
+
+Have you never done password cracking and want to take a whack at it on easy mode?
+
+HashcatHerder is a python wrapper to setup, install drivers, and run hashcat with ease.
 
 It will with good defaults, but allow you you change what you neede without a bunch of path issues.
 

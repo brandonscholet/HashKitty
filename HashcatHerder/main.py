@@ -9,8 +9,6 @@ from urllib.request import urlretrieve
 import platform
 import sys
 
-
-
 def get_gpu_brand():
     if platform.system() == "Windows":
         try:
@@ -202,8 +200,6 @@ def prereq_setup():
         # Run the 7-Zip command-line executable to extract the archive directly into the see_hashcat_folder folder
         subprocess.run([seven_zip_executable, "x", "-y", "-o" + see_hashcat_folder, "hashcat.7z"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
-       
-
         print(f"Unzipped hashcat.7z to {see_hashcat_folder}")
 
         # Optionally, delete the original downloaded 7z file
@@ -270,14 +266,12 @@ def crack_them(hash_file,guess_file,rules_file,users_true,quiet_mode,hash_mode,a
     print(f"Running: {hashcat_command.strip()}")
     
     
-    
     # Run hashcat.exe agaisnt file
     crack_run = subprocess.Popen(hashcat_command.strip().split(" "), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
     universal_newlines=True)
     
     new_cracks=0
    
-    
     for line in crack_run.stdout:
         if "Failed" not in line and "[c]heckpoint" not in line:
             print(line, end='') # show live output
@@ -350,7 +344,6 @@ def detect_mode(hash_file,users_true):
 
     return selected_option
 
-
 def extract_results():
     pot_file = "hashcat.potfile"
     output_file = "cracked_passwords.txt"
@@ -380,82 +373,79 @@ def extract_results():
         for password in combined_passwords:
             f.write(f"{password}\n")
 
-# Argument parsing
-parser = argparse.ArgumentParser(description="Hashcat automation script.")
+def do_the_thing():
+    # Argument parsing
+    parser = argparse.ArgumentParser(description="Hashcat automation script.")
 
-#File passed in
-parser.add_argument("-f", "--file", type=validate_file, required=True, help="Path to the dumped file.")
+    #File passed in
+    parser.add_argument("-f", "--file", type=validate_file, required=True, help="Path to the dumped file.")
 
-#command components
-parser.add_argument("-r", "--rules", type=validate_file, nargs='?', const=True, default=None, help="Allows you to run rules. defaults to OneRuleToRuleThemStill")
-parser.add_argument("-u", "--user", action='store_true', default=False, help="If your input has the user. then you need this")
-parser.add_argument("-s", "--show", action='store_true', default=False, help="Show cracked Results for file")
-parser.add_argument("-q", "--quiet", action='store_true', default=False, help="Experimental mode to only show the results and nothing else.")
-parser.add_argument("-w", "--wordlist", type=validate_file, default=None, help="to supply a wordlist that is not rockyou.txt")
+    #command components
+    parser.add_argument("-r", "--rules", type=validate_file, nargs='?', const=True, default=None, help="Allows you to run rules. defaults to OneRuleToRuleThemStill")
+    parser.add_argument("-u", "--user", action='store_true', default=False, help="If your input has the user. then you need this")
+    parser.add_argument("-s", "--show", action='store_true', default=False, help="Show cracked Results for file")
+    parser.add_argument("-q", "--quiet", action='store_true', default=False, help="Experimental mode to only show the results and nothing else.")
+    parser.add_argument("-w", "--wordlist", type=validate_file, default=None, help="to supply a wordlist that is not rockyou.txt")
 
-#mode or auto mode. default is 1000
-exclusive_group = parser.add_mutually_exclusive_group()
-exclusive_group.add_argument("-m", "--mode", default="1000", help="Set custom mode. Default is 1000 for NTLM")
-exclusive_group.add_argument("-a", "--auto-mode",  action='store_true', default=False, help="Let it try to figure out the hash mode.")
+    #mode or auto mode. default is 1000
+    exclusive_group = parser.add_mutually_exclusive_group()
+    exclusive_group.add_argument("-m", "--mode", default="1000", help="Set custom mode. Default is 1000 for NTLM")
+    exclusive_group.add_argument("-a", "--auto-mode",  action='store_true', default=False, help="Let it try to figure out the hash mode.")
 
+    args = parser.parse_args()
 
-args = parser.parse_args()
+    #get the current dir from setup and change to it
+    hashcat_folder = prereq_setup()
 
-#get the current dir from setup and change to it
-hashcat_folder = prereq_setup()
+    #check that all runtime drivers are 
+    check_drivers()
 
-#check that all runtime drivers are 
-check_drivers()
+    if not args.wordlist:
+        guess_file="rockyou.txt"
+        
+        
+        #guess_file="rockyou.txt"
+        #guess_file="C:\\Users\\BrandonScholet\\work\\clients\\cracking\\rockyou2021.txt"
+    else:
+        guess_file=args.wordlist
 
-if not args.wordlist:
-    guess_file="rockyou.txt"
-    
-    
-    #guess_file="rockyou.txt"
-    #guess_file="C:\\Users\\BrandonScholet\\work\\clients\\cracking\\rockyou2021.txt"
-else:
-    guess_file=args.wordlist
+    if not args.show:
 
-if not args.show:
-
-    #found_mode=detect_mode(args.file,args.user)
-    #print(found_mode)
-
-
-    crack_them(args.file,guess_file,args.rules,args.user,args.quiet,args.mode,args.auto_mode)
-
-    reattack=True
-    while reattack:
-        print("recursing...")
-
-        extract_results()
-        guess_file="cracked_passwords.txt"
-
-        new_hashes_discovered = crack_them(args.file,guess_file,True,args.user,args.quiet,args.mode,args.auto_mode)
-        print("new_hashes_discovered",new_hashes_discovered)
-        if new_hashes_discovered == 0:
-            reattack=False
+        #found_mode=detect_mode(args.file,args.user)
+        #print(found_mode)
 
 
-show_command=f"{os.getcwd()}\\hashcat.exe -m 1000 {args.file} --show "
-if args.user:
-    show_command += " --user"
+        crack_them(args.file,guess_file,args.rules,args.user,args.quiet,args.mode,args.auto_mode)
 
-print(f"Running: {show_command}")
+        reattack=True
+        while reattack:
+            print("recursing...")
 
-show_run = subprocess.Popen(show_command.strip().split(" "), stdout=subprocess.PIPE,
-universal_newlines=True)
+            extract_results()
+            guess_file="cracked_passwords.txt"
 
-for line in show_run.stdout:
-    if "Failed" not in line:
-        print(line, end='') # show live output
-  
-# wait for the subprocess to complete
-show_run.wait()
+            new_hashes_discovered = crack_them(args.file,guess_file,True,args.user,args.quiet,args.mode,args.auto_mode)
+            print("new_hashes_discovered",new_hashes_discovered)
+            if new_hashes_discovered == 0:
+                reattack=False
 
+
+    show_command=f"{os.getcwd()}\\hashcat.exe -m 1000 {args.file} --show "
+    if args.user:
+        show_command += " --user"
+
+    print(f"Running: {show_command}")
+
+    show_run = subprocess.Popen(show_command.strip().split(" "), stdout=subprocess.PIPE,
+    universal_newlines=True)
+
+    for line in show_run.stdout:
+        if "Failed" not in line:
+            print(line, end='') # show live output
+      
+    # wait for the subprocess to complete
+    show_run.wait()
+
+if __name__ == "__main__":
+    do_the_thing()
 	
-
-
-    
-	
-#.\hashcat.exe C:\Users\BrandonScholet\work\scripting\auto-hashcat\secretsdump.txt asdfasf --user | findstr "|"	

@@ -1,24 +1,24 @@
 # HashcatHerder
 
-- Do you want to crack some files without the hassle of installing hashcat and required GPU drivers?
-- Are you new to cracking and want to take a whack at it on easy mode?
-- Are you experienced with cracking but want to minimize some of the mental effort involved? (So many paths! So many arguments!)
+HashcatHerder is a user-friendly Python wrapper designed to provide an easy hashcat setup experience for both beginners and experienced users.
 
-HashcatHerder is a python wrapper to setup, install, and run hashcat with ease - including required drivers!
+This script simplifies the process of setting up, installing (including those pesky drivers), and running Hashcat for password cracking tasks. 
 
-While HashcatHerder configures up hashcat with useful default settings, you can easily change settings without fighting against path issues.
-
-Once HashcatHerder is done with your wordlist, it will recurse through your pots file passwords with rules until exhausted then print the results.
+After HashcatHerder completes your cracking session, it will quuickly iterate through your previously cracked passwords, applying rules to exhaust all possible variations and nicely print the complete results.
 
 ## Installation
+
+Before installing HashcatHerder, ensure you have [Python](https://www.python.org/downloads/) installed.
 
 ```pip install .```
 
 Follow any prompts to install drivers. HashcatHerder should grab everything based on your cpu/arch, but let me know if I missed something!
 
-## To run
+## Basic Usage
 
 ```HashcatHerder -f dumped_creds ```
+
+!!!!Don't forget to use `-u` or `--user` if your creds file contains the usernames in the first column!!!!
 
 If the HashcatHerder binary causes issues, you can run crack.py instead:
 
@@ -34,7 +34,7 @@ to use the default rule file use `-r`
 
 To use an alternate rule file use `-r <path to rules file>`
 
-I recommend using [rockyou2021.txt](https://github.com/ohmybahgosh/RockYou2021.txt) + rules for cheap hashes.
+I recommend using [rockyou2021.txt](https://github.com/ohmybahgosh/RockYou2021.txt) + rules for computationally cheap hash types, or if time is no issue.
 
 ## Modes
 
@@ -48,11 +48,7 @@ To specify a mode use `-m <mode>`
 - `-s` shows the cracked results that match but will NOT do any cracking. The summary is shown at the end anyways.
 - `-u` if your creds file contains the usernames in the first column, you will need to include this flag
 
-
-## Usage
-
-!!!!Don't forget to use `-u` or `--user` if your creds file contains the usernames in the first column!!!!
-
+## Full Usage
 ```
 PS C:\Users\BrandonScholet\Desktop> HashcatHerder.exe  -h
 usage: HashcatHerder [-h] -f FILE [-r [RULES]] [-u] [-s] [-q] [-w WORDLIST] [-m MODE | -a]

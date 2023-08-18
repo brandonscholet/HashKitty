@@ -38,15 +38,15 @@ I recommend using [rockyou2021.txt](https://github.com/ohmybahgosh/RockYou2021.t
 
 ## Modes
 
-HashcatHerder attempts to use `mode 1000 (NTLM)` cracking by default, but it can also attempt to guess the mode by using the flag `-a`.
+HashcatHerder attempts to use `mode 1000 (NTLM)` cracking by default, but it can also attempt to guess the mode by using the flag `-a`
 
-To specify a mode use `-m <mode>`.
+To specify a mode use `-m <mode>`
 
 ## Other Stuffs
 
-- `-q` is not done yet, but I wanted to quiet all the hashcat stuff and jsut spit out results, yaknow?
-- `-s` shows the cracked results that match and will NOT do any cracking. The summary is shown at the end anyways
-- `-u` if the username is in the dumped creds you will need to provide this
+- `-q` is not done yet, but I wanted to quiet all the hashcat stuff and just spit out results, yaknow?
+- `-s` shows the cracked results that match but will NOT do any cracking. The summary is shown at the end anyways.
+- `-u` if your creds file contains the usernames in the first column, you will need to include this flag
 
 
 ## Usage

@@ -188,6 +188,11 @@ def prereq_setup():
     seven_zip_executable = "C:\\Program Files\\7-Zip\\7z.exe"
 
     hashcat_folder = os.path.join(see_hashcat_folder, f"hashcat-{version}")
+    
+    empty_file= os.path.join(see_hashcat_folder, "empty.txt")
+    
+    with open(empty_file, 'w') as file:
+        pass 
 
     if not os.path.exists(hashcat_folder):
         print(f"Current Hashcat version: {version}")
@@ -412,8 +417,8 @@ def do_the_thing():
 
     args = parser.parse_args()
 
-    #get the current dir from setup and change to it
-    hashcat_folder = prereq_setup()
+    #setup
+    prereq_setup()
 
     #check that all runtime drivers are 
     check_drivers()

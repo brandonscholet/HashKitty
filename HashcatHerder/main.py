@@ -321,11 +321,17 @@ def detect_mode(hash_file,users_true):
     get_mode_run.wait()
     sys.stdin.flush()
 
+    if len(options) == 0:
+        print("\nThere were no hash matches. Do you need -u for usernames perhaps? \n\nCheck your hashes and specify a type.\n\nExiting...\n")
+        sys.exit(1)
+    
+    
     # print the options
     print("### Possible Hashtype matches ###")
     for i, option in enumerate(options):
         print(f"{i+1}. {' | '.join(option)}")
-        
+    
+
     #if there is only one option use it    
     if len(options) == 1:
         selected_option=options[0]

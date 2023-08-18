@@ -26,7 +26,7 @@ If the HashcatHerder binary causes issues, you can run crack.py instead:
 
 ## Wordlists, Rules
 
-By default, HashcatHerder downloads and uses the rockyou.txt wordlist and the oneruletorulethemallstill.rule rule file.
+By default, HashcatHerder downloads and uses the `rockyou.txt` wordlist and the `oneruletorulethemallstill.rule` rule file.
 
 To use an alternate wordlist file use `-w <path to wordlist>`
 

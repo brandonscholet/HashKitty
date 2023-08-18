@@ -20,7 +20,7 @@ Follow any prompts to install drivers. HashcatHerder should grab everything base
 
 ```HashcatHerder -f dumped_creds ```
 
-If the HashcatHerder binary causes issues use this. I'll leave it here for now
+If the HashcatHerder binary causes issues, you can run crack.py instead:
 
 ```./crack.py -f dumped_creds ```
 

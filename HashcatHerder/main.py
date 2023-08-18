@@ -242,7 +242,7 @@ def validate_file(f):
         raise argparse.ArgumentTypeError("{0} does not exist".format(f))
     return os.path.abspath(f)
 
-def crack_them(hash_file,guess_file,rules_file,users_true,quiet_mode,hash_mode,auto_mode):
+def crack_them(hash_file,guess_file,rules_file,users_true,quiet_mode,hash_mode,self_test_disable):
     # define the pattern to match the new digest percentages
     pattern = r'(\d+)/\d+\s+\((\d+\.\d+)%\) Digests \(new\)'
     match=""
@@ -250,10 +250,8 @@ def crack_them(hash_file,guess_file,rules_file,users_true,quiet_mode,hash_mode,a
     #create command
     base_hashcat_command="hashcat.exe -O -w 4"
     
-    hashcat_command=f"{base_hashcat_command} {hash_file} {guess_file}"
+    hashcat_command=f"{base_hashcat_command} {hash_file} {guess_file} -m {hash_mode}"
     
-    if not auto_mode:
-         hashcat_command += f" -m {hash_mode}"
     if rules_file:
         if rules_file == True:
             rules_file="OneRuleToRuleThemStill.rule"
@@ -262,6 +260,9 @@ def crack_them(hash_file,guess_file,rules_file,users_true,quiet_mode,hash_mode,a
         hashcat_command += " --user"
     if quiet_mode:
         hashcat_command += " --quiet"
+    if self_test_disable:
+        hashcat_command += " --self-test-disable"    
+
     
     print(f"Running: {hashcat_command.strip()}")
     
@@ -299,7 +300,9 @@ def crack_them(hash_file,guess_file,rules_file,users_true,quiet_mode,hash_mode,a
         exit()   
 
 def detect_mode(hash_file,users_true):
-    hashcat_command=f"hashcat.exe {hash_file} .\example0.sh"
+    #empty file to stop it being input mode
+    hashcat_command=f"hashcat.exe {hash_file} C:\hashcat\empty.txt --self-test-disable"
+    #hashcat_command=f"hashcat.exe {hash_file}"
 
     if users_true:
         hashcat_command += " --user"
@@ -308,10 +311,9 @@ def detect_mode(hash_file,users_true):
     get_mode_run = subprocess.Popen(hashcat_command.strip().split(" "), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
     universal_newlines=True)
     
-
     options = []  # create an empty list to store the options
     for line in get_mode_run.stdout:
-        print(line, end="")
+        #print(line, end="")
         if "|" in line:
             option_parts = line.strip().split("|")
             options.append(option_parts)  # append the full option to the list
@@ -320,29 +322,38 @@ def detect_mode(hash_file,users_true):
     sys.stdin.flush()
 
     # print the options
+    print("### Possible Hashtype matches ###")
     for i, option in enumerate(options):
         print(f"{i+1}. {' | '.join(option)}")
-
-    for option in options:
-        print("grrrr",option)
-
+        
+    #if there is only one option use it    
+    if len(options) == 1:
+        selected_option=options[0]
+        new_mode=selected_option[0].strip()
+        print(f"\nThis was the only detected match: {new_mode}")
+        return new_mode 
+        
     # ask the user for input
-    selected_option = input("Enter the number or hash mode of the option you want to select: ")
+    entered_option = input("Enter the index number or hash mode you want to select: ")
 
     # validate the input
-    while not selected_option.isdigit() and selected_option not in [option[0] for option in options]:
-        selected_option = input("Invalid input. Enter the number or hash mode of the option you want to select: ")
-
-    # find the selected option
-    if int(selected_option) <= len( selected_option) -1:
-        selected_index = int(selected_option) - 1
+    while not entered_option.isdigit():
+        entered_option = input("Invalid input. Enter the index number or hash mode you want to select: ")
+    
+    if int(entered_option) <= len(options):
+        selected_index = int(entered_option) - 1
+        selected_option = options[selected_index]
+        new_mode=selected_option[0].strip()
     else:
-        selected_index = [option[0] for option in options].index(selected_option)
+        if entered_option not in [option[0].strip() for option in options]:
+            confirm = input("\nThat wasn't provided, are you sure (YES/no): ")
+            if confirm.lower() not in ["yes", "y", ""]:
+                entered_option = input("\nTell me what it should be then: ")
 
-    print(selected_index)
-    selected_option = options[selected_index]
-
-    return selected_option
+        new_mode=entered_option.strip()
+        
+    return new_mode
+         
 
 def extract_results():
     pot_file = "hashcat.potfile"
@@ -386,6 +397,7 @@ def do_the_thing():
     parser.add_argument("-s", "--show", action='store_true', default=False, help="Show cracked Results for file")
     parser.add_argument("-q", "--quiet", action='store_true', default=False, help="Experimental mode to only show the results and nothing else.")
     parser.add_argument("-w", "--wordlist", type=validate_file, default=None, help="to supply a wordlist that is not rockyou.txt")
+    parser.add_argument("-d", "--disable", action='store_true', default=False, help="Disable self test if hashcat is being a pain.")
 
     #mode or auto mode. default is 1000
     exclusive_group = parser.add_mutually_exclusive_group()
@@ -402,20 +414,18 @@ def do_the_thing():
 
     if not args.wordlist:
         guess_file="rockyou.txt"
-        
-        
-        #guess_file="rockyou.txt"
-        #guess_file="C:\\Users\\BrandonScholet\\work\\clients\\cracking\\rockyou2021.txt"
     else:
         guess_file=args.wordlist
 
     if not args.show:
-
-        #found_mode=detect_mode(args.file,args.user)
-        #print(found_mode)
-
-
-        crack_them(args.file,guess_file,args.rules,args.user,args.quiet,args.mode,args.auto_mode)
+    
+        #decide which mode to use
+        if args.auto_mode:
+            final_mode=detect_mode(args.file,args.user)
+        else:
+            final_mode=args.mode
+        
+        crack_them(args.file,guess_file,args.rules,args.user,args.quiet,final_mode,args.disable)
 
         reattack=True
         while reattack:
@@ -424,13 +434,13 @@ def do_the_thing():
             extract_results()
             guess_file="cracked_passwords.txt"
 
-            new_hashes_discovered = crack_them(args.file,guess_file,True,args.user,args.quiet,args.mode,args.auto_mode)
+            new_hashes_discovered = crack_them(args.file,guess_file,True,args.user,args.quiet,final_mode,args.disable)
             print("new_hashes_discovered",new_hashes_discovered)
             if new_hashes_discovered == 0:
                 reattack=False
 
 
-    show_command=f"{os.getcwd()}\\hashcat.exe -m 1000 {args.file} --show "
+    show_command=f"{os.getcwd()}\\hashcat.exe -m {final_mode} {args.file} --show "
     if args.user:
         show_command += " --user"
 

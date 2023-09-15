@@ -1,32 +1,32 @@
-# HashcatHerder
+# HashKitty
 
-HashcatHerder is a user-friendly Python wrapper designed to provide an easy hashcat experience for both beginners and experienced users.
+HashKitty is a user-friendly Python wrapper designed to provide an easy hashcat experience for both beginners and experienced users.
 
 This script simplifies the process of setting up, installing (including those pesky drivers), and running Hashcat for password cracking tasks. 
 
-After HashcatHerder completes your cracking session, it will quuickly iterate through your previously cracked passwords, applying rules to exhaust all possible variations and nicely print the complete results.
+After HashKitty completes your cracking session, it will quuickly iterate through your previously cracked passwords, applying rules to exhaust all possible variations and nicely print the complete results.
 
 ## Installation
 
-Before installing HashcatHerder, ensure you have [Python](https://www.python.org/downloads/) installed.
+Before installing HashKitty, ensure you have [Python](https://www.python.org/downloads/) installed.
 
 ```pip install .```
 
-Follow any prompts to install drivers. HashcatHerder should grab everything based on your cpu/arch, but let me know if I missed something!
+Follow any prompts to install drivers. HashKitty should grab everything based on your cpu/arch, but let me know if I missed something!
 
 ## Basic Usage
 
-```HashcatHerder -f dumped_creds ```
+```HashKitty -f dumped_creds ```
 
 !!!!Don't forget to use `-u` or `--user` if your creds file contains the usernames in the first column!!!!
 
-If the HashcatHerder binary causes issues, you can run crack.py instead:
+If the HashKitty binary causes issues, you can run crack.py instead:
 
 ```./crack.py -f dumped_creds ```
 
 ## Wordlists, Rules
 
-By default, HashcatHerder downloads and uses the `rockyou.txt` wordlist and the `oneruletorulethemallstill.rule` rule file.
+By default, HashKitty downloads and uses the `rockyou.txt` wordlist and the `oneruletorulethemallstill.rule` rule file.
 
 To use an alternate wordlist file use `-w <path to wordlist>`
 
@@ -38,7 +38,7 @@ I recommend using [rockyou2021.txt](https://github.com/ohmybahgosh/RockYou2021.t
 
 ## Modes
 
-HashcatHerder attempts to use `mode 1000 (NTLM)` cracking by default, but it can also attempt to guess the mode by using the flag `-a`
+HashKitty attempts to use `mode 1000 (NTLM)` cracking by default, but it can also attempt to guess the mode by using the flag `-a`
 
 To specify a mode use `-m <mode>`
 
@@ -50,8 +50,8 @@ To specify a mode use `-m <mode>`
 
 ## Full Usage
 ```
-PS C:\Users\BrandonScholet\Desktop> HashcatHerder.exe  -h
-usage: HashcatHerder [-h] -f FILE [-r [RULES]] [-u] [-s] [-q] [-w WORDLIST] [-m MODE | -a]
+PS C:\Users\BrandonScholet\Desktop> HashKitty.exe  -h
+usage: HashKitty [-h] -f FILE [-r [RULES]] [-u] [-s] [-q] [-w WORDLIST] [-m MODE | -a]
 
 Hashcat automation script.
 

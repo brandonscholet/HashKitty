@@ -1,2 +1,2 @@
-# HashcatHerder/__init__.py
+# HashKitty/__init__.py
 from .main import do_the_thing

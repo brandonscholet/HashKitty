@@ -1,4 +1,4 @@
-# HashKitty
+# HashKitty - Tame the cat!
 
 HashKitty is a user-friendly Python wrapper designed to provide an easy hashcat experience for both beginners and experienced users.
 

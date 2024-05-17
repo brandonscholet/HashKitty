@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='HashKitty',
-    version='0.220',
+    version='1.1',
     description='herds your (hash)cats',
     author='Brandon',
     author_email='brandon@scholet.net',

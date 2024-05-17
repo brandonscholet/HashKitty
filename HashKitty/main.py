@@ -60,7 +60,7 @@ def check_AMD_drivers():
         url = "https://www.amd.com/en/support"
         headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36'}
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(response.content, 'html.parser')
 
         download_link = None
@@ -71,7 +71,7 @@ def check_AMD_drivers():
                 break
         
         headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36',  "Referer": "https://www.amd.com/"}
-        response = requests.get(download_link, headers=headers)
+        response = requests.get(download_link, headers=headers, verify=False)
         
         exe_name = "amd_installer.exe"
         
@@ -166,7 +166,7 @@ def check_drivers():
 def prereq_setup():
 
     url = 'https://hashcat.net/hashcat/'
-    response = requests.get(url)
+    response = requests.get(url, verify=False)
     content = response.content
 
     soup = BeautifulSoup(content, 'html.parser')
@@ -245,36 +245,36 @@ def validate_file(f):
         # Argparse uses the ArgumentTypeError to give a rejection message like:
         # error: argument input: x does not exist
         raise argparse.ArgumentTypeError("{0} does not exist".format(f))
-    return os.path.abspath(f)
+    return os.path.abspath(f).replace('\\', '/')
 
 def crack_them(hash_file,guess_file,rules_file,users_true,quiet_mode,hash_mode,self_test_disable):
     # define the pattern to match the new digest percentages
     pattern = r'(\d+)/\d+\s+\((\d+\.\d+)%\) Digests \(new\)'
-    match=""
+    match = ""
+
+    # create command
+    base_hashcat_command = ["hashcat.exe", "-O", "-w", "4"]
     
-    #create command
-    base_hashcat_command="hashcat.exe -O -w 4"
-    
-    hashcat_command=f"{base_hashcat_command} {hash_file} {guess_file} -m {hash_mode}"
+    # Append the file paths and additional options directly to the command list
+    hashcat_command = base_hashcat_command + [hash_file, guess_file]
     
     if rules_file:
         if rules_file == True:
-            rules_file="OneRuleToRuleThemStill.rule"
-        hashcat_command += f" --rules {rules_file}"
+            rules_file = "OneRuleToRuleThemStill.rule"
+        hashcat_command += ["--rules", rules_file]
     if users_true:
-        hashcat_command += " --user"
+        hashcat_command.append("--user")
     if quiet_mode:
-        hashcat_command += " --quiet"
+        hashcat_command.append("--quiet")
     if self_test_disable:
         hashcat_command += " --self-test-disable"    
 
     
-    print(f"Running: {hashcat_command.strip()}")
+    # Print the command for debugging
+    print("Running:", ' '.join(hashcat_command))
     
-    
-    # Run hashcat.exe agaisnt file
-    crack_run = subprocess.Popen(hashcat_command.strip().split(" "), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-    universal_newlines=True)
+    # Run hashcat.exe against the file
+    crack_run = subprocess.Popen(hashcat_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
     
     new_cracks=0
    
@@ -365,7 +365,6 @@ def detect_mode(hash_file,users_true):
         
     return new_mode
          
-
 def extract_results():
     pot_file = "hashcat.potfile"
     output_file = "cracked_passwords.txt"

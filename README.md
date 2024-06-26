@@ -6,6 +6,8 @@ This script simplifies the process of setting up, installing (including those pe
 
 After HashKitty completes your cracking session, it will quuickly iterate through your previously cracked passwords, applying rules to exhaust all possible variations and nicely print the complete results.
 
+Some hashtypes have advance analysis available, like NTLM.
+
 ## Installation
 
 Before installing HashKitty, ensure you have [Python](https://www.python.org/downloads/) installed.
@@ -20,9 +22,6 @@ Follow any prompts to install drivers. HashKitty should grab everything based on
 
 !!!!Don't forget to use `-u` or `--user` if your creds file contains the usernames in the first column!!!!
 
-If the HashKitty binary causes issues, you can run crack.py instead:
-
-```./crack.py -f dumped_creds ```
 
 ## Wordlists, Rules
 
@@ -38,20 +37,22 @@ I recommend using [rockyou2021.txt](https://github.com/ohmybahgosh/RockYou2021.t
 
 ## Modes
 
-HashKitty attempts to use `mode 1000 (NTLM)` cracking by default, but it can also attempt to guess the mode by using the flag `-a`
+HashKitty attempts to automatically determine the hash type by default (with a menu for multiple choices).
+
+Use `-m` to specify the modes
 
 To specify a mode use `-m <mode>`
 
 ## Other Stuffs
 
-- `-q` is not done yet, but I wanted to quiet all the hashcat stuff and just spit out results, yaknow?
+- `-q` quiet all the hashcat stuff and just spit out results, yaknow?
 - `-s` shows the cracked results that match but will NOT do any cracking. The summary is shown at the end anyways.
 - `-u` if your creds file contains the usernames in the first column, you will need to include this flag
 
+
 ## Full Usage
 ```
-PS C:\Users\BrandonScholet\Desktop> HashKitty.exe  -h
-usage: HashKitty [-h] -f FILE [-r [RULES]] [-u] [-s] [-q] [-w WORDLIST] [-m MODE | -a]
+usage: HashKitty [-h] -f FILE [-r [RULES]] [-u] [-s] [-q] [-w WORDLIST] [-d] [-m MODE] [-a]
 
 Hashcat automation script.
 
@@ -62,18 +63,24 @@ options:
                         Allows you to run rules. defaults to OneRuleToRuleThemStill
   -u, --user            If your input has the user. then you need this
   -s, --show            Show cracked Results for file
-  -q, --quiet           Experimental mode to only show the results and nothing else.
+  -q, --quiet           show the results as they are creacked and nothing else from hashcat
   -w WORDLIST, --wordlist WORDLIST
                         to supply a wordlist that is not rockyou.txt
-  -m MODE, --mode MODE  Set custom mode. Default is 1000 for NTLM
-  -a, --auto-mode       Let it try to figure out the hash mode.
+  -d, --disable         Disable self test if hashcat is being a pain.
+  -m MODE, --mode MODE  Manually set hash type
+  -a, --analysis        Findings Analysis for select hashtypes (NTLM)
 ```  
 
 ## Roadmap
-1. Metrics for cracked passwords
+1.  - Metrics 
+	- [x]  Lots of checks
+	- [ ]  More Checks
 2. Reporting: 
-    - most-commonly used passwords
-    - similarly named accounts using identical passwords
+    - [x]  most-commonly used passwords
+    - [x]  similarly named accounts using identical passwords
+    - [ ]  json,csv output of all data
+    - [ ]  Scoring and Work Report?
 3. BloodHound integration:
-    - send info about cracked users to BH and mark them as owned
-    - create custom edges
+    - [ ]  send info about cracked users to BH and mark them as owned
+    - [ ]  create custom edges
+4. 

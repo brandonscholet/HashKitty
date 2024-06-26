@@ -12,7 +12,6 @@ setup(
         'bs4',
         'tabulate',
         'pandas',
-        'jinja2',
     ],
 	entry_points={
         'console_scripts': [

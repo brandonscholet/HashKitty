@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='HashKitty',
-    version='1.1',
+    version='2.4',
     description='herds your (hash)cats',
     author='Brandon',
     author_email='brandon@scholet.net',
@@ -10,6 +10,9 @@ setup(
     packages=find_packages(),
     install_requires=[
         'bs4',
+        'tabulate',
+        'pandas',
+        'jinja2',
     ],
 	entry_points={
         'console_scripts': [

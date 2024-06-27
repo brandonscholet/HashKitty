@@ -12,6 +12,11 @@ setup(
         'bs4',
         'tabulate',
         'pandas',
+        'requests',
+        'bs4',
+        'tabulate',
+        'pandas',
+        'urllib3'
     ],
 	entry_points={
         'console_scripts': [
@@ -19,3 +24,4 @@ setup(
         ],
     },
 )
+

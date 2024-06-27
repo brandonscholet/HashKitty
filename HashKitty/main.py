@@ -691,12 +691,14 @@ def do_the_thing():
         guess_file = os.path.join(hashcat_results_folder, "rockyou.txt")
     else:
         guess_file = args.wordlist
-
-    if not args.rules:
-        rules_file = os.path.join(hashcat_results_folder, "OneRuleToRuleThemStill.rule")
+    
+    if args.rules == None:
+        rules_file=""    
+    elif args.rules != True: 
+        rules_file = args.rules
     else:
-        rules_file = args.rules    
-
+        rules_file = os.path.join(hashcat_results_folder, "OneRuleToRuleThemStill.rule")    
+    
     if not args.mode:
         
         empty_file= os.path.join(hashcat_results_folder, "empty.txt")
@@ -842,7 +844,7 @@ def do_the_thing():
             #  All Hash Collision  #
             ################################
             finding_title = "All Hash Collision"
-            column_order = ["user", "domain", "password_hash", "user_status", "pwdLastSet"]
+            column_order = ["user", "domain", "password_hash", "password" "user_status", "pwdLastSet"]
             array_filter = lambda x: x['password_hash'] != "31d6cfe0d16ae931b73c59d7e0c089c0"
             sort_keys = [lambda x: x['password_hash'], lambda x: x['user'].lower()]
 

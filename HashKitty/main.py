@@ -75,7 +75,6 @@ def check_AMD_drivers():
             exe_file.write(response.content)
         print(f"{exe_name} downloaded. Starting installation...")
         os.system(f"start {exe_name}")
-        
         AMD_driver_found=False
         x=subprocess.run(verify_install,stdout=subprocess.PIPE, universal_newlines=True)
         lines=x.stdout.split('\n')
@@ -179,7 +178,7 @@ def prereq_setup():
         # Run hashcat.exe with the -b option
         test_run = subprocess.run(["hashcat.exe", "-b", "-m", "1000", "-O", "-D", "1,2,3", "-w", "4"])
         if test_run.returncode != 0:
-            raise Exception(f"Hashcat benchmark failed with return code: {result.returncode}")
+            raise Exception(f"Hashcat benchmark failed with return code: {test_run.returncode}")
             exit()
     else:
         #print(f"Hashcat {version} is current.")

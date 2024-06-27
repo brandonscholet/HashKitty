@@ -587,8 +587,6 @@ def detect_mode(hash_file, users_true, empty_file):
     if users_true:
         hashcat_command += " --user"
 
-
-    print(hashcat_command)
     get_mode_run = subprocess.Popen(hashcat_command.strip().split(" "), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
     options = []
 
@@ -723,13 +721,10 @@ def do_the_thing():
                 
         print("\n\n")
         
-        
-    #os.chdir(hashcat_folder)
     show_command = f"hashcat -m {final_mode} {args.file} --show "
     if args.user:
         show_command += " --user"
         
-    print(show_command)    
 
     show_run = subprocess.Popen(show_command.strip().split(" "), stdout=subprocess.PIPE, universal_newlines=True)
 
@@ -843,6 +838,16 @@ def do_the_thing():
 
             display_results(finding_title, collisions, column_order, array_filter, sort_keys, sort_by_freq='password_hash')
 
+            ################################
+            #  All Hash Collision  #
+            ################################
+            finding_title = "All Hash Collision"
+            column_order = ["user", "domain", "password_hash", "user_status", "pwdLastSet"]
+            array_filter = lambda x: x['password_hash'] != "31d6cfe0d16ae931b73c59d7e0c089c0"
+            sort_keys = [lambda x: x['password_hash'], lambda x: x['user'].lower()]
+
+            display_results(finding_title, collisions, column_order, array_filter, sort_keys, sort_by_freq='password_hash')
+            
             ############################
             # Same user/pass in different domain #
             ############################
@@ -851,7 +856,7 @@ def do_the_thing():
             array_filter = lambda x: x['password_hash'] != "31d6cfe0d16ae931b73c59d7e0c089c0"
             sort_keys = [lambda x: x['user'].lower(), lambda x: x['domain']]
 
-            filtered_data = find_duplicate_usernames_with_same_hash(user_data)
+            filtered_data = find_duplicate_usernames_with_same_hash(current_users)
             display_results(finding_title, filtered_data, column_order, array_filter, sort_keys, sort_by_freq='password_hash')
 
             ###################################
@@ -860,9 +865,9 @@ def do_the_thing():
             finding_title = "Similar user/hash in different domain"
             column_order = ["user", "domain", "password_hash", "password", "user_status", "pwdLastSet"]
             array_filter = lambda x: x['password_hash'] != "31d6cfe0d16ae931b73c59d7e0c089c0"
-            sort_keys = [lambda x: x['user'].lower(), lambda x: x['domain']]
+            sort_keys = [lambda x: x['password_hash'].lower(), lambda x: x['user'], lambda x: x['domain']]
 
-            filtered_data = find_similar_usernames_with_same_hash(user_data)
+            filtered_data = find_similar_usernames_with_same_hash(current_users)
             display_results(finding_title, filtered_data, column_order, array_filter, sort_keys, sort_by_freq='password_hash')
 
             ################################
@@ -883,7 +888,7 @@ def do_the_thing():
             array_filter = lambda x: x['lm_hash'] != "aad3b435b51404eeaad3b435b51404ee"
             sort_keys = [lambda x: x['lm_hash']]
 
-            display_results(finding_title, collisions, column_order, array_filter, sort_keys)
+            display_results(finding_title, current_users, column_order, array_filter, sort_keys)
 
             ############################
             #   Show Blank Passwords   #
@@ -905,33 +910,45 @@ def do_the_thing():
 
             display_results(finding_title, user_data, column_order, array_filter, sort_keys)
 
+            
+            ################################
+            # Cracked Historical Passwords #
+            ################################
+            
+            # Calculate statistics
+            cracked = sum(1 for user in user_data if user["password"])
+            current_cracked = sum(1 for user in user_data if user["password"] and not user["history_user"])
 
-            cracked = 0
-            current_cracked = 0
-            for user in user_data:
-                if user["password"]:
-                    cracked += 1
-                    if not user["history_user"]:
-                        current_cracked += 1
+            total_hashes = len(user_data)
+            current_users = sum(1 for user in user_data if not user["history_user"])
+            historical_hashes_cracked = cracked - current_cracked
+            percentage_current_cracked = 100 * (current_cracked / current_users) if current_users else 0
+            percentage_historical_cracked = 100 * (cracked / total_hashes) if total_hashes else 0
 
-            print("\n\n")
-            print(f"Number of hashes:\t{len(user_data)}")
-            print(f"current_users:\t{len(current_users)}")
-            print(f"number of hashes cracked:\t{cracked}")
+            # Prepare statistics table data
+            stats_data = [
+                ["Total number of hashes", total_hashes],
+                ["Number of current users", current_users],
+                ["Number of hashes cracked", cracked],
+                ["Number of current users cracked", current_cracked],
+                ["Percentage of current users cracked", f"{percentage_current_cracked:.2f}%"],
+                ["Number of historical passwords cracked", historical_hashes_cracked],
+                ["Percentage of historical passwords cracked", f"{percentage_historical_cracked:.2f}%"]
+            ]
 
-            percentage_cracked = 100 * (current_cracked / len(current_users))
-            print(f"number of current users cracked:\t{current_cracked}")
-            print(f"percent of current users cracked:\t{percentage_cracked:.2f}")
+            # Print statistics table
+            print("\nStatistics:\n")
+            print(tabulate(stats_data, headers=["Metric", "Value"], tablefmt='grid'))
 
-            percentage_cracked = 100 * (cracked / len(user_data))
-            print(f"number of historical passwords cracked:\t{cracked - current_cracked}")
-            print(f"percent of historical passwords cracked:\t{percentage_cracked:.2f}")
 
         else:
             print(f"\nAnalysis not available for this hashtype: {final_mode}\n")
             for line in sorted(hashcat_results):
                 if "31d6cfe0d16ae931b73c59d7e0c089c0:" not in line and "aad3b435b51404eeaad3b435b51404ee:" not in line and "Failed to parse" not in line:
                     print(line)
+                    
+                    
+
 
     else:
         for line in sorted(hashcat_results):

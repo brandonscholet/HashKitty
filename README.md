@@ -24,6 +24,59 @@ Follow any prompts to install drivers. HashKitty should grab everything based on
 
 `-a` or `--analysis` if your hashtype has analysis prepared
 
+## Analysis and Reporting
+
+Below are the current list of checks performed for select `hash types / modes`. Please feel free to request or PR any additional checks as the data and prinitng is modular.
+
+1. NTLM (1000):
+- Not the Best Passwords
+- Cracked Passwords for Enabled Users
+- Cracked Passwords for all users
+- Cracked Passwords for Status Unknown Users
+- Cracked Passwords for Disabled Users
+- Stale Passwords for enabled users ( age > 500 days)
+- Cracked Hash Collisions
+- Enabled User w/ Hash Collision
+- Same user/hash check in multiple domains
+- Similar user/hash in different domain
+- Uncracked Hash Collisions
+- Users with LM Hashes
+- Blank Password Hash (Likely Disabled)
+- Cracked Historical Passwords
+
+### Writing new analysis:
+
+Currently there is one set of data `user_data` with two other sets: `current_users` and `collisions`. 
+
+The `current_users` is all the hashes in `user_data` that do not have `_history` in the name, if hashcat was pulled historically. 
+
+`Collisions` is a set where a hash exists at least twice in the `user_data` data set.
+
+### Exmaple analysis check for NTLM
+```
+    ############################################
+    # Show Cracked Passwords For Enabled Users #
+    ############################################
+    #Specify title for tables/report            
+    finding_title = "Cracked Passwords for Enabled Users"
+    
+    # Specify the desired order of columns
+    column_order = ["user", "domain", "password", "user_status", "pwdLastSet"]
+
+    # Define the array filter to exclude entries where 'password' is empty, no default has and user enabled
+    array_filter = lambda x: x['password'] != '' and x['password_hash'] != "31d6cfe0d16ae931b73c59d7e0c089c0" and x["user_status"] == "Enabled"
+
+    # Define the sort order. "-" in front will do reverse order. The example below will sort by username then password, but lowercase
+    sort_keys = [
+	lambda x: x['user'].lower()
+	lambda x: x['password'].lower(),
+
+    ]
+
+    # Call the printing function with the sample data, column order, filter, and sort key
+    display_results(finding_title,current_users, column_order, array_filter, sort_keys)         
+```
+
 
 
 ## Wordlists, Rules

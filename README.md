@@ -22,6 +22,9 @@ Follow any prompts to install drivers. HashKitty should grab everything based on
 
 !!!!Don't forget to use `-u` or `--user` if your creds file contains the usernames in the first column!!!!
 
+`-a` or `--analysis` if your hashtype has analysis prepared
+
+
 
 ## Wordlists, Rules
 

@@ -587,6 +587,8 @@ def detect_mode(hash_file, users_true, empty_file):
     if users_true:
         hashcat_command += " --user"
 
+
+    print(hashcat_command)
     get_mode_run = subprocess.Popen(hashcat_command.strip().split(" "), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
     options = []
 
@@ -682,6 +684,7 @@ def do_the_thing():
     args = parser.parse_args()
 
     hashcat_folder, hashcat_results_folder = prereq_setup()
+    os.chdir(hashcat_folder)
 
     if not args.show:
         check_drivers(hashcat_folder)
@@ -697,6 +700,7 @@ def do_the_thing():
         rules_file = args.rules    
 
     if not args.mode:
+        
         empty_file= os.path.join(hashcat_results_folder, "empty.txt")
         final_mode = detect_mode(args.file, args.user, empty_file)
     else:
@@ -718,10 +722,14 @@ def do_the_thing():
                 reattack = False
                 
         print("\n\n")
-
+        
+        
+    #os.chdir(hashcat_folder)
     show_command = f"hashcat -m {final_mode} {args.file} --show "
     if args.user:
         show_command += " --user"
+        
+    print(show_command)    
 
     show_run = subprocess.Popen(show_command.strip().split(" "), stdout=subprocess.PIPE, universal_newlines=True)
 

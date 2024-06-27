@@ -20,13 +20,13 @@ Follow any prompts to install drivers. HashKitty should grab everything based on
 
 ```HashKitty -f dumped_creds ```
 
-!!!!Don't forget to use `-u` or `--user` if your creds file contains the usernames in the first column!!!!
-
-`-a` or `--analysis` if your hashtype has analysis prepared
+*Don't forget to use `-u` or `--user` if your creds file contains the usernames in the first column*
 
 ## Analysis and Reporting
 
-Below are the current list of checks performed for select `hash types / modes`. Please feel free to request or PR any additional checks as the data and prinitng is modular.
+Below are the current list of checks performed for select `hash types / modes`. Use `-a` or `--analysis` to switch to this mode
+
+Please feel free to request or PR any additional checks as the data and prinitng is modular.
 
 1. NTLM (1000):
 - Not the Best Passwords
@@ -94,8 +94,6 @@ I recommend using [rockyou2021.txt](https://github.com/ohmybahgosh/RockYou2021.t
 ## Modes
 
 HashKitty attempts to automatically determine the hash type by default (with a menu for multiple choices).
-
-Use `-m` to specify the modes
 
 To specify a mode use `-m <mode>`
 

@@ -295,7 +295,7 @@ def find_similar_usernames_with_same_hash(user_data):
         kinda_a_match = False
         for user2 in user_data:
             if user1['password_hash'] == user2['password_hash'] and user1['password_hash'] !="31d6cfe0d16ae931b73c59d7e0c089c0":
-                if user1["user"].lower() != user2["user"].lower() and "_history" not in entry['user']:
+                if user1["user"].lower() != user2["user"].lower() and "_history" not in user1['user']:
                     if user1["user"].lower() in user2["user"].lower() or user2["user"].lower() in user1["user"].lower():
                         kinda_a_match=True
                     else:
@@ -553,8 +553,8 @@ def do_the_thing():
             array_filter = lambda x: x['password'] != '' and x['password_hash'] != "31d6cfe0d16ae931b73c59d7e0c089c0" and x["user_status"] == "Enabled"
             # Define the sort keys
             sort_keys = [
-                lambda x: x['user'].lower()
-                lambda x: x['password'].lower(),
+                lambda x: x['user'].lower(),
+                lambda x: x['password'].lower()
             ]
             # Call the function with the sample data, column order, filter, and sort key
             display_results(finding_title,current_users, column_order, array_filter, sort_keys)         

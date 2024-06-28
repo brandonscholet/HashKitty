@@ -5,17 +5,118 @@ import subprocess
 import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from urllib.request import urlretrieve
+#from urllib.request import download_file
 import platform
 import sys
 from collections import defaultdict, Counter
 from tabulate import tabulate
 import pandas as pd
 from difflib import SequenceMatcher
+import time
+from datetime import datetime, timedelta
 
 import urllib3
 urllib3.disable_warnings()
 
+
+def prereq_setup():
+    if platform.system() == "Windows":
+        hashcat_root_dir = "C:\\hashcat"
+        hashcat_results_folder = "C:\\hashcat"
+    elif platform.system() == "Linux":
+        hashcat_root_dir = "/opt/hashcat"
+        hashcat_results_folder = os.path.expanduser("~")+"/.hashcat/"
+    
+    if not os.path.exists(hashcat_root_dir):
+        download_hashcat(hashcat_root_dir)
+    else:
+        hashcat_folder = get_most_current_version(hashcat_root_dir) 
+        if hashcat_folder:
+            folder_age_days = check_folder_age(hashcat_root_dir)
+            if folder_age_days >= 30:
+                download_hashcat(hashcat_root_dir)
+                hashcat_folder = get_most_current_version(hashcat_root_dir)
+            else:
+                check_drivers(hashcat_folder)
+        else:
+            download_hashcat(hashcat_root_dir)
+            hashcat_folder = get_most_current_version(hashcat_root_dir)
+            check_drivers(hashcat_folder)
+                
+                
+    if not os.path.exists(hashcat_results_folder):
+         os.makedirs(hashcat_results_folder)
+    
+    empty_file = os.path.join(hashcat_results_folder, "empty.txt")
+    rockyou_file = os.path.join(hashcat_results_folder, "rockyou.txt")
+    one_rule_file = os.path.join(hashcat_results_folder, "OneRuleToRuleThemStill.rule")    
+    if not os.path.exists(empty_file) or not os.path.exists(rockyou_file) or not os.path.exists(one_rule_file):
+        download_wordlists_rules(hashcat_results_folder, empty_file, rockyou_file, one_rule_file)
+
+    return hashcat_folder, hashcat_results_folder
+
+def download_file(file_url, output_path):
+    response = requests.get(file_url, stream=True, verify=False)
+    with open(output_path, 'wb') as file:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                file.write(chunk)
+                
+def download_hashcat(hashcat_root_dir):
+    if platform.system() == "Windows":
+        seven_zip_executable = "C:\\Program Files\\7-Zip\\7z.exe"
+    elif platform.system() == "Linux":
+        seven_zip_executable = "/usr/bin/7z"
+        
+    url = 'https://hashcat.net/hashcat/'
+    response = requests.get(url, verify=False)
+    content = response.content
+
+    soup = BeautifulSoup(content, 'html.parser')
+    version_div = soup.select_one('#download table tr td a')['href']
+
+    file_url = urljoin(url, version_div)
+    version = re.search(r'hashcat-(\d+\.\d+\.\d+)', file_url).group(1)
+    
+    hashcat_folder = os.path.join(hashcat_root_dir, f"hashcat-{version}")
+    
+    os.makedirs(hashcat_root_dir, exist_ok=True)
+    
+    print(f"Downloading current Hashcat release: {version}")
+
+    download_file(file_url, "hashcat.7z")
+    print("Downloaded hashcat.7z")
+
+    subprocess.run([seven_zip_executable, "x", "-y", "-o" + hashcat_root_dir, "hashcat.7z"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(f"Unzipped hashcat.7z to {hashcat_root_dir}")
+
+    os.remove("hashcat.7z")
+
+    os.chdir(hashcat_folder)
+
+    test_run = subprocess.run(["hashcat", "-b", "-m", "1000", "-O", "-D", "1,2,3", "-w", "4"])
+    if test_run.returncode != 0:
+        raise Exception(f"Hashcat benchmark failed with return code: {test_run.returncode}")
+        exit()
+
+def download_wordlists_rules(hashcat_results_folder, empty_file, rockyou_file, one_rule_file):   
+    
+    os.chdir(hashcat_results_folder)
+    
+    if not os.path.exists(empty_file):
+        with open(empty_file, "w") as file:
+            pass
+
+    if not os.path.exists(rockyou_file):
+        print(f"Downloading rockyou.txt")
+        download_file('https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt', rockyou_file)
+        print(f"Downloaded rockyou.txt")
+
+    if not os.path.exists(one_rule_file):
+        print(f"Downloading OneRuleToRuleThemStill")
+        download_file('https://raw.githubusercontent.com/stealthsploit/OneRuleToRuleThemStill/main/OneRuleToRuleThemStill.rule', one_rule_file)
+        print(f"Downloaded OneRuleToRuleThemStill")        
+    
 def get_gpu_brand():
     if platform.system() == "Windows":
         try:
@@ -224,76 +325,24 @@ def check_drivers(hashcat_folder):
     if cpu_brand == "Intel":
         check_Intel_OpenCL_drivers(hashcat_folder)
 
-def prereq_setup():
-    url = 'https://hashcat.net/hashcat/'
-    response = requests.get(url, verify=False)
-    content = response.content
-
-    soup = BeautifulSoup(content, 'html.parser')
-    version_div = soup.select_one('#download table tr td a')['href']
-
-    file_url = urljoin(url, version_div)
-    version = re.search(r'hashcat-(\d+\.\d+\.\d+)', file_url).group(1)
-
-    if platform.system() == "Windows":
-        hashcat_root_dir = "C:\\hashcat"
-        hashcat_results_folder = "C:\\hashcat"
-        seven_zip_executable = "C:\\Program Files\\7-Zip\\7z.exe"
-    elif platform.system() == "Linux":
-        hashcat_root_dir = "/opt/hashcat"
-        hashcat_results_folder = os.path.expanduser("~")+"/.hashcat/"
-        seven_zip_executable = "/usr/bin/7z"
-
-    os.makedirs(hashcat_root_dir, exist_ok=True)
-    os.makedirs(hashcat_results_folder, exist_ok=True)
-
-    hashcat_folder = os.path.join(hashcat_root_dir, f"hashcat-{version}")
+def get_most_current_version(base_path):
+    # Regular expression to match version numbers
+    version_pattern = re.compile(r'hashcat-(\d+\.\d+\.\d+)')
     
-    if not os.path.exists(hashcat_results_folder):
-        os.makedirs(hashcat_results_folder)
-        
-    empty_file = os.path.join(hashcat_results_folder, "empty.txt")
-
-
-    with open(empty_file, "w") as file:
-        pass
-
-    if not os.path.exists(hashcat_folder):
-        print(f"Current Hashcat version: {version}")
-
-        urlretrieve(file_url, "hashcat.7z")
-        print("Downloaded hashcat.7z")
-
-        subprocess.run([seven_zip_executable, "x", "-y", "-o" + hashcat_root_dir, "hashcat.7z"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"Unzipped hashcat.7z to {hashcat_root_dir}")
-
-        os.remove("hashcat.7z")
-        print("Cleaned up downloaded file")
-
-        os.chdir(hashcat_folder)
-
-        test_run = subprocess.run(["hashcat", "-b", "-m", "1000", "-O", "-D", "1,2,3", "-w", "4"])
-        if test_run.returncode != 0:
-            raise Exception(f"Hashcat benchmark failed with return code: {test_run.returncode}")
-            exit()
-    else:
-        hashcat_folder = os.path.join(hashcat_root_dir, f"hashcat-{version}")
-        os.chdir(hashcat_folder)
-        
-        
-    os.chdir(hashcat_results_folder)
+    most_current_version = None
+    most_current_version_path = None
     
-    rockyou_file = os.path.join(hashcat_results_folder, "rockyou.txt")
-    if not os.path.exists(rockyou_file):
-        urlretrieve('https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt', rockyou_file)
-        print(f"Downloaded rockyou.txt")
-
-    one_rule_file = os.path.join(hashcat_results_folder, "OneRuleToRuleThemStill.rule")
-    if not os.path.exists(one_rule_file):
-        urlretrieve('https://raw.githubusercontent.com/stealthsploit/OneRuleToRuleThemStill/main/OneRuleToRuleThemStill.rule', one_rule_file)
-        print(f"Downloaded OneRuleToRuleThemStill.rule")
-
-    return hashcat_folder, hashcat_results_folder
+    for subfolder in os.listdir(base_path):
+        match = version_pattern.match(subfolder)
+        if match:
+            version = match.group(1)
+            version_tuple = tuple(map(int, version.split('.')))
+            
+            if most_current_version is None or version_tuple > most_current_version:
+                most_current_version = version_tuple
+                most_current_version_path = os.path.join(base_path, subfolder)
+    
+    return most_current_version_path    
 
 def validate_file(f):
     if not os.path.exists(f):
@@ -310,46 +359,6 @@ def parse_hash_file(file_path,user_data,final_mode):
             
             if len(parts) >= 4:
                 password=""
-                #pwdLastSet = ""
-                history_user=False
-                domain_user = parts[0]
-                password_hash = parts[3]   
-                user_status_match = re.search(r'\(status=(Enabled|Disabled)\)', line)
-                user_status = user_status_match.group(1) if user_status_match else "Unknown"
-
-                pwd_set_match = re.search(rf'\(pwdLastSet=([\d-]*)', line)
-                pwdLastSet = pwd_set_match.group(1) if pwd_set_match else ""
-                
-                if "\\" in domain_user:
-                    domain, username = domain_user.split("\\")
-                else:
-                    domain, username = "", domain_user
-                
-                
-                if "_history" in username:
-                    history_user = username.split("_history")[1]
-                else:
-                    history_user=False                    
-                                     
-                    
-                if final_mode==str(1000):
-                    lm_hash = parts[2]
-                    password_hash = parts[3]
-                    
-                    user_data.append({"user": username, "domain": domain, "lm_hash": lm_hash, "password_hash": password_hash, "user_status": user_status, "password": password, "pwdLastSet": pwdLastSet, "history_user": history_user })
-                else:
-                    password_hash = parts[3]
-                    user_data.append({"user": username, "domain": domain, "password_hash": password_hash, "user_status": user_status, "password": password, "pwdLastSet": pwdLastSet, "history_user": history_user })
-                    
-def parse_hash_file(file_path,user_data,final_mode):
-    with open(file_path, 'r') as file:
-        file_data = file.readlines()
-        for line in file_data:
-            parts = line.strip().split(":")
-            
-            if len(parts) >= 4:
-                password=""
-                #pwdLastSet = ""
                 history_user=False
                 domain_user = parts[0]
                 password_hash = parts[3]   
@@ -428,6 +437,27 @@ def parse_hashcat(hashcat_folder,hashcat_results_folder,user_data, final_mode):
                 
     os.chdir(hashcat_results_folder)            
 
+def check_folder_age(folder_path):
+    # Get the current time
+    current_time = time.time()
+    
+    # Get the last modification time of the folder
+    folder_mod_time = os.path.getmtime(folder_path)
+    
+    # Calculate the folder age in days
+    folder_age_days = (current_time - folder_mod_time) / (24 * 3600)
+    
+    return folder_age_days
+    
+def age_in_days(date_str):
+    if date_str:
+        input_date = datetime.strptime(date_str, '%Y-%m-%d')
+        current_date = datetime.now()
+        difference = current_date - input_date
+        return int(difference.days)
+    else:
+        return 0
+                        
 def display_results(finding_title,user_data, column_order, array_filter=None, sort_keys=None, sort_by_freq=None):
    
 
@@ -541,13 +571,13 @@ def display_only_current_users(user_data):
                 
     return current_accounts    
 
-def crack_them(hash_file, guess_file, rules_arg, rules_file, users_true, quiet_mode, hash_mode, self_test_disable):
+def crack_them(hash_file, guess_file, rules_file, users_true, quiet_mode, hash_mode, self_test_disable):
     pattern = r'(\d+)/\d+\s+\((\d+\.\d+)%\) Digests \(new\)'
     match = ""
     base_hashcat_command = ["hashcat", "-O", "-w", "4", "-m", hash_mode]
     hashcat_command = base_hashcat_command + [hash_file, guess_file]
 
-    if rules_arg:
+    if rules_file:
         hashcat_command += ["--rules", rules_file]
     if users_true:
         hashcat_command.append("--user")
@@ -579,7 +609,7 @@ def crack_them(hash_file, guess_file, rules_arg, rules_file, users_true, quiet_m
     if crack_run.returncode == 1:
         return new_cracks
     elif crack_run.returncode != 0:
-        raise Exception(f"Hashcat failed with return code: {crack_run.returncode}")
+        raise Exception(f"Hashcat failed with return code: {crack_run.returncode} {crack_run.stderr}")
         exit()
 
 def detect_mode(hash_file, users_true, empty_file):
@@ -682,10 +712,7 @@ def do_the_thing():
     args = parser.parse_args()
 
     hashcat_folder, hashcat_results_folder = prereq_setup()
-    os.chdir(hashcat_folder)
-
-    if not args.show:
-        check_drivers(hashcat_folder)
+    os.chdir(hashcat_folder)        
 
     if not args.wordlist:
         guess_file = os.path.join(hashcat_results_folder, "rockyou.txt")
@@ -707,7 +734,7 @@ def do_the_thing():
         final_mode = args.mode
 
     if not args.show:
-        crack_them(args.file, guess_file, args.rules, rules_file, args.user, args.quiet, final_mode, args.disable)
+        crack_them(args.file, guess_file, rules_file, args.user, args.quiet, final_mode, args.disable)
 
         reattack = True
         while reattack:
@@ -715,9 +742,10 @@ def do_the_thing():
 
             extract_results(hashcat_folder, hashcat_results_folder)
             guess_file = os.path.join(hashcat_results_folder, "cracked_passwords.txt")
+            rules_file = os.path.join(hashcat_results_folder, "OneRuleToRuleThemStill.rule")
 
             #enable rules anbd set crack passwords.txt
-            new_hashes_discovered = crack_them(args.file, guess_file, True, rules_file, args.user, args.quiet, final_mode, args.disable)
+            new_hashes_discovered = crack_them(args.file, guess_file, rules_file, args.user, args.quiet, final_mode, args.disable)
             if new_hashes_discovered == 0:
                 reattack = False
                 
@@ -802,16 +830,6 @@ def do_the_thing():
             ######################################
             # Stale Passwords for enabled users  #
             ######################################
-            from datetime import datetime
-
-            def age_in_days(date_str):
-                if date_str:
-                    input_date = datetime.strptime(date_str, '%Y-%m-%d')
-                    current_date = datetime.now()
-                    difference = current_date - input_date
-                    return int(difference.days)
-                else:
-                    return 0
 
             finding_title = "Stale Passwords for enabled users ( age > 500 days)"
             column_order = ["user", "domain", "password", "password_hash", "user_status", "pwdLastSet"]

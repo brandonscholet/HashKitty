@@ -3,19 +3,20 @@ import requests
 import os
 import subprocess
 import re
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
-#from urllib.request import download_file
 import platform
 import sys
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import time
+from datetime import datetime, timedelta
+import urllib3
+
 from collections import defaultdict, Counter
 from tabulate import tabulate
 import pandas as pd
 from difflib import SequenceMatcher
-import time
-from datetime import datetime, timedelta
 
-import urllib3
+
 urllib3.disable_warnings()
 
 
@@ -29,20 +30,19 @@ def prereq_setup():
     
     if not os.path.exists(hashcat_root_dir):
         download_hashcat(hashcat_root_dir)
-    else:
-        hashcat_folder = get_most_current_version(hashcat_root_dir) 
-        if hashcat_folder:
-            folder_age_days = check_folder_age(hashcat_root_dir)
-            if folder_age_days >= 30:
-                download_hashcat(hashcat_root_dir)
-                hashcat_folder = get_most_current_version(hashcat_root_dir)
-            else:
-                check_drivers(hashcat_folder)
-        else:
+        
+    hashcat_folder = get_most_current_version(hashcat_root_dir)
+    
+    if hashcat_folder:
+        folder_age_days = check_folder_age(hashcat_root_dir)
+        if folder_age_days >= 30:
             download_hashcat(hashcat_root_dir)
             hashcat_folder = get_most_current_version(hashcat_root_dir)
-            check_drivers(hashcat_folder)
-                
+            check_drivers(hashcat_folder)           
+    else:
+        download_hashcat(hashcat_root_dir)
+        hashcat_folder = get_most_current_version(hashcat_root_dir)
+        check_drivers(hashcat_folder)
                 
     if not os.path.exists(hashcat_results_folder):
          os.makedirs(hashcat_results_folder)
@@ -85,7 +85,7 @@ def download_hashcat(hashcat_root_dir):
     print(f"Downloading current Hashcat release: {version}")
 
     download_file(file_url, "hashcat.7z")
-    print("Downloaded hashcat.7z")
+    #print("Downloaded hashcat.7z")
 
     subprocess.run([seven_zip_executable, "x", "-y", "-o" + hashcat_root_dir, "hashcat.7z"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print(f"Unzipped hashcat.7z to {hashcat_root_dir}")

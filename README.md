@@ -1,6 +1,6 @@
 # HashKitty - Tame the cat!
 
-HashKitty is a user-friendly Python wrapper designed to provide an easy hashcat experience for both beginners and experienced users.
+HashKitty is a user-friendly Python wrapper designed to provide an easy cross-platform hashcat experience for both beginners and experienced users.
 
 This script simplifies the process of setting up, installing (including those pesky drivers), and running Hashcat for password cracking tasks. 
 
@@ -22,6 +22,62 @@ Follow any prompts to install drivers. HashKitty should grab everything based on
 
 !!!!Don't forget to use `-u` or `--user` if your creds file contains the usernames in the first column!!!!
 
+## Analysis and Reporting
+
+Below are the current list of checks performed for select `hash types / modes`. Use `-a` or `--analysis` to switch to this mode
+
+Please feel free to request or PR any additional checks as the data and prinitng is modular.
+
+1. NTLM (1000):
+- Not the Best Passwords
+- Cracked Passwords for Enabled Users
+- Cracked Passwords for all users
+- Cracked Passwords for Status Unknown Users
+- Cracked Passwords for Disabled Users
+- Stale Passwords for enabled users ( age > 500 days)
+- Cracked Hash Collisions
+- Enabled User w/ Hash Collision
+- Same user/hash check in multiple domains
+- Similar user/hash in different domain
+- Uncracked Hash Collisions
+- Users with LM Hashes
+- Blank Password Hash (Likely Disabled)
+- Cracked Historical Passwords
+
+### Writing new analysis:
+
+Currently there is one set of data `user_data` with two other sets: `current_users` and `collisions`. 
+
+The `current_users` is all the hashes in `user_data` that do not have `_history` in the name, if hashcat was pulled historically. 
+
+`Collisions` is a set where a hash exists at least twice in the `user_data` data set.
+
+### Exmaple analysis check for NTLM
+```
+    ############################################
+    # Show Cracked Passwords For Enabled Users #
+    ############################################
+    #Specify title for tables/report            
+    finding_title = "Cracked Passwords for Enabled Users"
+    
+    # Specify the desired order of columns
+    column_order = ["user", "domain", "password", "user_status", "pwdLastSet"]
+
+    # Define the array filter to exclude entries where 'password' is empty, no default has and user enabled
+    array_filter = lambda x: x['password'] != '' and x['password_hash'] != "31d6cfe0d16ae931b73c59d7e0c089c0" and x["user_status"] == "Enabled"
+
+    # Define the sort order. "-" in front will do reverse order. The example below will sort by username then password, but lowercase
+    sort_keys = [
+	lambda x: x['user'].lower()
+	lambda x: x['password'].lower(),
+
+    ]
+
+    # Call the printing function with the sample data, column order, filter, and sort key
+    display_results(finding_title,current_users, column_order, array_filter, sort_keys)         
+```
+
+
 
 ## Wordlists, Rules
 
@@ -38,8 +94,6 @@ I recommend using [rockyou2021.txt](https://github.com/ohmybahgosh/RockYou2021.t
 ## Modes
 
 HashKitty attempts to automatically determine the hash type by default (with a menu for multiple choices).
-
-Use `-m` to specify the modes
 
 To specify a mode use `-m <mode>`
 
@@ -72,7 +126,7 @@ options:
 ```  
 
 ## Roadmap
-1. Metrics 
+1.  Metrics 
 	- [x]  Lots of checks
 	- [ ]  More Checks
 2. Reporting: 

@@ -1,6 +1,6 @@
 # HashKitty - Tame the cat!
 
-HashKitty is a user-friendly Python wrapper designed to provide an easy hashcat experience for both beginners and experienced users.
+HashKitty is a user-friendly Python wrapper designed to provide an easy cross-platform hashcat experience for both beginners and experienced users.
 
 This script simplifies the process of setting up, installing (including those pesky drivers), and running Hashcat for password cracking tasks. 
 
